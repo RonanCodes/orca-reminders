@@ -1,0 +1,47 @@
+{
+  "manifestVersion": 2,
+  "id": "reminders",
+  "name": "Reminders",
+  "version": "0.1.0",
+  "description": "Remind me later: set reminders tied to a workspace or tab, get a desktop notification when they are due, and snooze, move or tick them off from a sidebar panel.",
+  "author": {
+    "name": "Ronan Connolly",
+    "url": "https://github.com/RonanCodes"
+  },
+  "repository": "https://github.com/RonanCodes/orca-reminders",
+  "homepage": "https://github.com/RonanCodes/orca-reminders",
+  "license": "MIT",
+  "engines": {
+    "orca": ">=1.4.246"
+  },
+  "execution": "trusted-worker",
+  "pluginApi": 1,
+  "main": "src/worker.ts",
+  "capabilities": [
+    { "kind": "storage:own" },
+    { "kind": "notifications:show" },
+    { "kind": "workspace:read" },
+    { "kind": "agent:read" }
+  ],
+  "contributes": {
+    "panels": [
+      {
+        "id": "reminders",
+        "title": "Reminders",
+        "icon": "bell",
+        "entry": "src/panel.tsx",
+        "ui": "components"
+      }
+    ],
+    "commands": [
+      { "id": "remind.15m", "title": "Reminders: Remind me in 15 minutes about this workspace", "when": "workspace" },
+      { "id": "remind.1h", "title": "Reminders: Remind me in 1 hour about this workspace", "when": "workspace" },
+      { "id": "remind.tomorrow", "title": "Reminders: Remind me tomorrow at 09:00 about this workspace", "when": "workspace" },
+      { "id": "reminders.show", "title": "Reminders: Show pending reminders" }
+    ],
+    "events": [
+      { "on": "agent.status.changed" },
+      { "on": "workspace.changed" }
+    ]
+  }
+}
