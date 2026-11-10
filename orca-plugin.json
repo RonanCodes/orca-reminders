@@ -1,9 +1,10 @@
 {
+  "$schema": "https://raw.githubusercontent.com/stablyai/orca/main/docs/schemas/plugins/orca-plugin.v2.schema.json",
   "manifestVersion": 2,
   "id": "reminders",
   "name": "Reminders",
-  "version": "0.1.0",
-  "description": "Remind me later: set reminders tied to a workspace or tab, get a desktop notification when they are due, and snooze, move or tick them off from a sidebar panel.",
+  "version": "0.2.0",
+  "description": "Remind me later about this workspace or tab: a desktop notification when it is due, a count in the status bar, and snooze, move, open or tick off from a sidebar panel or the palette.",
   "author": {
     "name": "Ronan Connolly",
     "url": "https://github.com/RonanCodes"
@@ -12,15 +13,48 @@
   "homepage": "https://github.com/RonanCodes/orca-reminders",
   "license": "MIT",
   "engines": {
-    "orca": ">=1.4.246"
+    "orca": ">=1.4.248"
   },
   "execution": "trusted-worker",
   "pluginApi": 1,
   "main": "src/worker.ts",
+  "icon": "images/icon.png",
+  "cover": {
+    "path": "images/cover.png",
+    "alt": "The Reminders panel beside a workspace in Orca: a due reminder with Done, Snooze and Open buttons, the add form, and the pending list."
+  },
+  "screenshots": [
+    {
+      "path": "images/panel-light.png",
+      "alt": "The Reminders panel in a light Orca theme, with a due reminder, the add form and three pending reminders.",
+      "caption": "Due, pending and done, in one panel",
+      "theme": "light"
+    },
+    {
+      "path": "images/panel-dark.png",
+      "alt": "The Reminders panel in a dark Orca theme, with a due reminder, the add form and three pending reminders.",
+      "caption": "Due, pending and done, in one panel",
+      "theme": "dark"
+    },
+    {
+      "path": "images/move-light.png",
+      "alt": "Moving a pending reminder to a new time typed as friday 10:00, in a light Orca theme.",
+      "caption": "Move a reminder to any time you can type",
+      "theme": "light"
+    },
+    {
+      "path": "images/move-dark.png",
+      "alt": "Moving a pending reminder to a new time typed as friday 10:00, in a dark Orca theme.",
+      "caption": "Move a reminder to any time you can type",
+      "theme": "dark"
+    }
+  ],
   "capabilities": [
     { "kind": "storage:own" },
+    { "kind": "settings:own" },
     { "kind": "notifications:show" },
     { "kind": "workspace:read" },
+    { "kind": "workspace:write" },
     { "kind": "agent:read" }
   ],
   "contributes": {
@@ -36,12 +70,41 @@
     "commands": [
       { "id": "remind.15m", "title": "Reminders: Remind me in 15 minutes about this workspace", "when": "workspace" },
       { "id": "remind.1h", "title": "Reminders: Remind me in 1 hour about this workspace", "when": "workspace" },
-      { "id": "remind.tomorrow", "title": "Reminders: Remind me tomorrow at 09:00 about this workspace", "when": "workspace" },
-      { "id": "reminders.show", "title": "Reminders: Show pending reminders" }
+      { "id": "remind.tomorrow", "title": "Reminders: Remind me tomorrow morning about this workspace", "when": "workspace" },
+      { "id": "reminders.show", "title": "Reminders: Show pending reminders" },
+      { "id": "reminders.snoozeDue", "title": "Reminders: Snooze due reminders 15 minutes" },
+      { "id": "reminders.doneDue", "title": "Reminders: Mark due reminders done" },
+      { "id": "reminders.openDue", "title": "Reminders: Open the workspace of the oldest due reminder" }
+    ],
+    "statusBarItems": [
+      {
+        "id": "count",
+        "icon": "bell",
+        "tooltip": "Reminders",
+        "command": "reminders.show"
+      }
+    ],
+    "settings": [
+      {
+        "key": "morningTime",
+        "title": "Morning time",
+        "description": "What \"tomorrow\", \"next week\" and a weekday without a time mean.",
+        "type": "string",
+        "enum": ["07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00"],
+        "default": "09:00"
+      },
+      {
+        "key": "statusBar",
+        "title": "Show the count in the status bar",
+        "description": "How many reminders are due or pending. Pressing it lists them.",
+        "type": "boolean",
+        "default": true
+      }
     ],
     "events": [
       { "on": "agent.status.changed" },
-      { "on": "workspace.changed" }
+      { "on": "workspace.changed" },
+      { "on": "workspace.removed" }
     ]
   }
 }

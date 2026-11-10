@@ -20,6 +20,8 @@ declare module 'orca' {
     'reminders.done': { input: { id: string }; output: Reminder[] }
     'reminders.cancel': { input: { id: string }; output: Reminder[] }
     'reminders.clearDone': { output: Reminder[] }
+    /** Shows the reminder's workspace in Orca. Rejects when it has none or it was removed. */
+    'reminders.open': { input: { id: string }; output: { opened: boolean } }
   }
   interface PluginPanelEvents {
     /** Posted to every open panel after the list changes, including when one fires. */

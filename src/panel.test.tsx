@@ -1,4 +1,4 @@
-import { afterEach, assert, mockHost, mount, test, type TestPanel } from 'orca/testing'
+import { afterEach, assert, hostError, mockHost, mount, test, type TestPanel } from 'orca/testing'
 import * as panelModule from './panel'
 import type { Reminder } from './schedule'
 
@@ -79,4 +79,66 @@ test('lists agents that are not working', async () => {
   assert.ok(has('Agents needing you here (1)'))
   assert.ok(has('Claude: review'))
   assert.ok(!has('Codex: tests'))
+})
+
+test('opens the workspace of a reminder, and hides Open once it was removed', async () => {
+  const opened: string[] = []
+  const linked: Reminder = { id: 'a', text: 'Check CI', dueAt: soon, createdAt: 0, status: 'pending', link: { workspace: 'api', workspaceId: 'w1' } }
+  const gone: Reminder = { id: 'b', text: 'Old branch', dueAt: soon + 1, createdAt: 0, status: 'pending', link: { workspace: 'spike', removed: true } }
+  const worker = fakeWorker([linked, gone])
+  panel = await mount(panelModule, {
+    host: mockHost({
+      requests: { ...worker.requests, 'reminders.open': ({ id }: { id: string }) => (opened.push(id), { opened: true }) },
+      results: { 'agents.list': { agents: [] } }
+    })
+  })
+  assert.equal(panel.findAll({ type: 'Button', text: 'Open' }).length, 1)
+  await panel.press({ type: 'Button', text: 'Open' })
+  assert.deepEqual(opened, ['a'])
+  assert.ok(has('spike (workspace removed)'))
+})
+
+test('moves a reminder to a typed time', async () => {
+  const moved: { id: string; when: string }[] = []
+  const worker = fakeWorker([{ id: 'a', text: 'Check CI', dueAt: soon, createdAt: 0, status: 'pending' }])
+  panel = await mount(panelModule, {
+    host: mockHost({
+      requests: { ...worker.requests, 'reminders.reschedule': (input: { id: string; when: string }) => (moved.push(input), worker.list) },
+      results: { 'agents.list': { agents: [] } }
+    })
+  })
+  await panel.press({ text: 'Move' })
+  await panel.type({ label: 'New time' }, 'friday 10:00', { submit: true })
+  assert.deepEqual(moved, [{ id: 'a', when: 'friday 10:00' }])
+  assert.equal(panel.find({ label: 'New time' }), null)
+})
+
+test('shows a worker error and lets it be dismissed', async () => {
+  const worker = fakeWorker()
+  panel = await mount(panelModule, {
+    host: mockHost({
+      requests: {
+        ...worker.requests,
+        'reminders.add': () => {
+          throw hostError('invalid_params', 'Could not read the time "soonish".')
+        }
+      },
+      results: { 'agents.list': { agents: [] } }
+    })
+  })
+  await panel.type({ label: 'Remind me to' }, 'x')
+  await panel.press({ text: 'Add reminder' })
+  assert.ok(has('Could not read the time'))
+  await panel.press({ text: 'Dismiss' })
+  assert.ok(!has('Could not read the time'))
+})
+
+test('labels the presets with the morning time setting', async () => {
+  const worker = fakeWorker()
+  panel = await mount(panelModule, {
+    host: mockHost({ requests: worker.requests, settings: { morningTime: '08:30' }, results: { 'agents.list': { agents: [] } } })
+  })
+  assert.ok(has('Tomorrow 08:30'))
+  assert.ok(has('Next Monday 08:30'))
+  assert.deepEqual(panel.refusals, [])
 })
