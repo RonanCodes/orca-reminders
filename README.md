@@ -69,7 +69,7 @@ A reminder linked to a workspace remembers which one, so you can open it later e
 have moved on to other work. A reminder linked to a tab also names the tab, so you know which
 agent or terminal to look at.
 
-<img src="images/move-light.png" alt="The add form set to At a time, with the time field showing examples such as 16:00, 4pm, 45m, 2d and friday 10:00." width="640">
+<img src="images/time-light.png" alt="The add form set to At a time, with the time field showing examples such as 16:00, 4pm, 45m, 2d and friday 10:00." width="640">
 
 ## Times you can type
 

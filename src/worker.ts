@@ -167,12 +167,14 @@ export default function activate(orca: OrcaWorkerApi): void {
 
   // Workspaces -------------------------------------------------------------------------------
 
-  async function listWorkspaces(): Promise<WorkspaceRow[]> {
+  /** Every workspace Orca lists; `complete` is false when the list was cut short or failed. */
+  async function listWorkspaces(): Promise<{ rows: WorkspaceRow[]; complete: boolean }> {
     try {
-      return (await orca.host.call('workspace.list', {})).workspaces
+      const answer = await orca.host.call('workspace.list', {})
+      return { rows: answer.workspaces, complete: !answer.truncated }
     } catch (error) {
       orca.log(`workspace.list failed: ${(error as Error).message}`)
-      return []
+      return { rows: [], complete: false }
     }
   }
 
@@ -190,7 +192,7 @@ export default function activate(orca: OrcaWorkerApi): void {
     if (!context) return undefined
     const link: ReminderLink = { workspace: context.displayName || context.branch }
     if (context.branch) link.branch = context.branch
-    const row = findWorkspace(await listWorkspaces(), context.displayName, context.branch)
+    const row = findWorkspace((await listWorkspaces()).rows, context.displayName, context.branch)
     if (row) {
       link.workspaceId = row.id
       link.path = row.path
@@ -208,14 +210,15 @@ export default function activate(orca: OrcaWorkerApi): void {
     const link = reminder?.link
     if (!link) throw invalid('This reminder is not tied to a workspace.')
     if (link.removed) throw invalid(`The workspace "${link.workspace}" was removed.`)
-    const rows = await listWorkspaces()
+    const { rows, complete } = await listWorkspaces()
     // Reminders from 0.1.0 have no id yet: find the workspace by name and branch.
     const row = link.workspaceId
       ? rows.find((item) => item.id === link.workspaceId) ??
         rows.find((item) => link.path !== undefined && item.path === link.path)
       : findWorkspace(rows, link.workspace, link.branch)
     if (!row) {
-      if (rows.length > 0 && (link.workspaceId || link.path)) {
+      // Only a full list proves the workspace is gone; a cut-short one may just not show it.
+      if (complete && rows.length > 0 && (link.workspaceId || link.path)) {
         await edit((list) =>
           markWorkspaceRemoved(list, { workspaceId: link.workspaceId ?? '', path: link.path ?? '' })
         )

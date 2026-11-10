@@ -275,3 +275,18 @@ test('opening a reminder without a workspace explains why', async () => {
   const added = await worker.request('reminders.add', { text: 'Loose', when: '1h' })
   await assert.rejects(worker.request('reminders.open', { id: added.id }), /not tied to a workspace/)
 })
+
+test('open marks a workspace removed only when Orca listed every workspace', async () => {
+  const stored = [{ id: 'a', text: 'A', dueAt: Date.now() + 60_000, createdAt: 0, status: 'pending', link: { workspace: 'gone', workspaceId: 'w9', path: '/r/gone' } }]
+  const other = { id: 'w1', kind: 'worktree', name: 'other', path: '/r/other', branch: 'main', hostId: null }
+  const cut = mockHost({ storage: { reminders: stored }, results: { 'workspace.list': { workspaces: [other], truncated: true } } })
+  let worker = await start({ host: cut })
+  await assert.rejects(worker.request('reminders.open', { id: 'a' }), /Could not find/)
+  assert.equal((await worker.request('reminders.list'))[0].link?.removed, undefined)
+  await worker.deactivate()
+
+  const full = mockHost({ storage: { reminders: stored }, results: { 'workspace.list': { workspaces: [other], truncated: false } } })
+  worker = await start({ host: full })
+  await assert.rejects(worker.request('reminders.open', { id: 'a' }), /was removed/)
+  assert.equal((await worker.request('reminders.list'))[0].link?.removed, true)
+})

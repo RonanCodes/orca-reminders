@@ -1,0 +1,77 @@
+<!doctype html>
+<!--
+  Lays a real panel shot (from `orca plugin shot . --scenario …`) on a 1600×1000 canvas for the
+  catalog cover and screenshots. Render with docs/art/render.sh; nothing here is drawn by hand
+  except the background and the words.
+  Query: ?shot=<png>&theme=light|dark&title=…&lead=…&points=a|b|c
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reminders art</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-1: #fff7ec; --bg-2: #ffe3c4; --ink: #2a1a0c; --muted: #6b5541;
+    --accent: #f06a2a; --frame: #ffffff; --frame-edge: rgba(42, 26, 12, 0.10);
+    --shadow: 0 40px 80px rgba(120, 60, 10, 0.20), 0 8px 24px rgba(120, 60, 10, 0.12);
+  }
+  :root.dark {
+    --bg-1: #17120e; --bg-2: #2b1d12; --ink: #fbefe2; --muted: #c2ab95;
+    --accent: #ff9a4d; --frame: #1d1916; --frame-edge: rgba(255, 255, 255, 0.10);
+    --shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  html, body { width: 1600px; height: 1000px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(1200px 800px at 15% 10%, var(--bg-1), var(--bg-2));
+    display: grid; grid-template-columns: 1fr 520px; gap: 64px; align-items: center;
+    padding: 0 120px 0 128px;
+  }
+  .copy { display: flex; flex-direction: column; gap: 28px; }
+  .brand { display: flex; align-items: center; gap: 18px; font-size: 26px; font-weight: 600; color: var(--muted); }
+  .brand img { width: 64px; height: 64px; }
+  h1 { font-size: 72px; line-height: 1.04; letter-spacing: -0.02em; font-weight: 750; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lead { font-size: 28px; line-height: 1.4; color: var(--muted); max-width: 640px; }
+  ul { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+  li { font-size: 24px; display: flex; gap: 14px; align-items: baseline; }
+  li::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; transform: translateY(-3px); }
+  .frame {
+    justify-self: end; width: 452px; max-height: 900px; overflow: hidden;
+    background: var(--frame); border: 1px solid var(--frame-edge); border-radius: 18px;
+    box-shadow: var(--shadow);
+  }
+  .bar { height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--frame-edge); }
+  .bar span { width: 11px; height: 11px; border-radius: 50%; background: var(--frame-edge); }
+  .frame img.shot { display: block; width: 100%; }
+  /* A panel taller than the frame fades out at the bottom instead of stopping at a hard edge. */
+  .frame.cropped img.shot { mask-image: linear-gradient(to bottom, #000 82%, transparent); }
+</style>
+</head>
+<body>
+  <section class="copy">
+    <div class="brand"><img src="../../images/icon.png" alt="">Reminders for Orca</div>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+    <ul id="points"></ul>
+  </section>
+  <div class="frame"><div class="bar"><span></span><span></span><span></span></div><img class="shot" id="shot" alt=""></div>
+<script>
+  const q = new URLSearchParams(location.search)
+  if (q.get('theme') === 'dark') document.documentElement.classList.add('dark')
+  document.getElementById('title').innerHTML = (q.get('title') || '').replace(/\*(.+?)\*/g, '<em>$1</em>')
+  document.getElementById('lead').textContent = q.get('lead') || ''
+  for (const point of (q.get('points') || '').split('|').filter(Boolean)) {
+    const li = document.createElement('li'); li.textContent = point
+    document.getElementById('points').append(li)
+  }
+  const shot = document.getElementById('shot')
+  shot.onload = () => {
+    if (shot.getBoundingClientRect().height > 866) shot.parentElement.classList.add('cropped')
+  }
+  shot.src = q.get('shot')
+</script>
+</body>
+</html>

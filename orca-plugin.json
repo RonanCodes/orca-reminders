@@ -37,15 +37,15 @@
       "theme": "dark"
     },
     {
-      "path": "images/move-light.png",
-      "alt": "Moving a pending reminder to a new time typed as friday 10:00, in a light Orca theme.",
-      "caption": "Move a reminder to any time you can type",
+      "path": "images/time-light.png",
+      "alt": "The add form set to At a time, with examples of times you can type, in a light Orca theme.",
+      "caption": "Any time you can type: 16:00, 45m, friday, next week",
       "theme": "light"
     },
     {
-      "path": "images/move-dark.png",
-      "alt": "Moving a pending reminder to a new time typed as friday 10:00, in a dark Orca theme.",
-      "caption": "Move a reminder to any time you can type",
+      "path": "images/time-dark.png",
+      "alt": "The add form set to At a time, with examples of times you can type, in a dark Orca theme.",
+      "caption": "Any time you can type: 16:00, 45m, friday, next week",
       "theme": "dark"
     }
   ],
